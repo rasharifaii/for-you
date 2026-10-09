@@ -11,15 +11,6 @@
     background: radial-gradient(ellipse at center, transparent 48%, rgba(0, 0, 0, .7) 100%);
   }
 
-.sound {
-  position: fixed; bottom: max(20px, env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%);
-  background: none; border: 0; cursor: pointer; padding: 10px 14px;
-  font: 200 11px/1 inherit; font-family: inherit; letter-spacing: .5em; padding-left: calc(14px + .5em);
-  text-transform: lowercase; color: rgba(255, 232, 232, .32);
-  transition: color .4s ease;
-}
-.sound:hover, .sound:focus-visible { color: rgba(255, 232, 232, .75); outline: none; }
-
   .caption {
     position: fixed; left: 0; right: 0; text-align: center; pointer-events: none;
     font-weight: 200; font-size: clamp(10px, 0.9vw + 7px, 14px);
