@@ -244,9 +244,18 @@
     canvas.width = Math.round(w * view.dpr); canvas.height = Math.round(h * view.dpr);
 
     if (!outline) buildOutline();
-    const portrait = w < 640;
-    const widthUnits = 32.4;
-    view.scale = Math.min((w * (portrait ? 0.86 : 0.78)) / widthUnits, (h * 0.66) / view.unitH);
+
+const portrait = w < 640;
+const widthUnits = 32.4;
+
+const availableHeight = h * (portrait ? 0.48 : 0.66);
+const availableWidth = w * (portrait ? 0.90 : 0.78);
+
+view.scale = Math.min(
+  availableWidth / widthUnits,
+  availableHeight / view.unitH
+);
+
     view.heartW = widthUnits * view.scale; view.heartH = view.unitH * view.scale;
     view.fontPx = clamp(Math.min(w, h) * 0.0068, 3.6, 6.4);
     view.cx = w / 2;
@@ -433,36 +442,39 @@ function thump(when, strength, pitch) {
   click.start(when);
 }
 
-// Schedules each lub-dub slightly ahead, locked to the visual beat timeline
-function scheduleBeatSound() {
-  if (!audio.enabled) return;
-  const cycle = Math.floor((time - HEARTBEAT_START + 0.3) / BEAT_PERIOD);
-  if (cycle < 0 || cycle <= audio.lastCycle) return;
-  audio.lastCycle = cycle;
-  const cycleStart = audio.ctx.currentTime + (HEARTBEAT_START + cycle * BEAT_PERIOD - time);
-  thump(cycleStart + 0.13, 0.9, 52);   // lub
-  thump(cycleStart + 0.45, 0.5, 62);   // dub, weaker and a touch higher
-}
 
-function setSound(on) {
-  if (on && !audio.ctx) {
-    const AudioCtx = window.AudioContext || window.webkitAudioContext;
-    if (!AudioCtx) return;
-    audio.ctx = new AudioCtx();
-    audio.master = audio.ctx.createGain();
-    audio.master.gain.value = 0.9;          // overall volume
-    audio.master.connect(audio.ctx.destination);
-    audio.noise = createNoiseBuffer(audio.ctx);
+/* ---------- Interactive heart click ---------- */
+
+let clickPulse = 0;
+
+function triggerHeart() {
+  clickPulse = 1;
+
+  // إظهار النص مباشرة
+  caption.classList.add('visible');
+  captionShown = true;
+
+  // نبضة صوتية إذا كان الصوت مفعّلاً
+  if (audio.enabled && audio.ctx) {
+    const now = audio.ctx.currentTime;
+    thump(now, 0.9, 48);
+    thump(now + 0.22, 0.5, 58);
   }
-  if (on) audio.ctx.resume();
-  audio.enabled = on;
-  audio.lastCycle = Math.max(-1, Math.floor((time - HEARTBEAT_START + 0.3) / BEAT_PERIOD));
-  soundBtn.textContent = on ? 'sound on' : 'sound off';
-  soundBtn.setAttribute('aria-pressed', String(on));
 }
 
-soundBtn.addEventListener('click', () => setSound(!audio.enabled));
-addEventListener('keydown', e => { if (e.key === 'm' || e.key === 'M') setSound(!audio.enabled); });
+canvas.addEventListener('click', (e) => {
+  const dx = e.clientX - view.cx;
+  const dy = e.clientY - view.cy;
+
+  // الضغط داخل مساحة القلب
+  if (
+    Math.abs(dx) < view.heartW * 0.55 &&
+    Math.abs(dy) < view.heartH * 0.6
+  ) {
+    triggerHeart();
+  }
+});
+
 
   /* ---------- Main loop ---------- */
   let lastFrame = performance.now();
